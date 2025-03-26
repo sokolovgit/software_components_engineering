@@ -1,0 +1,218 @@
+openapi: 3.0.0
+info:
+  title: Music Streaming Platform API
+  version: 1.0.0
+  description: API for managing user authentication, streaming music, searching, recommendations, ads, payments, lyrics, and analytics.
+servers:
+  - url: https://api.musicstream.com/v1
+
+paths:
+  /users/{id}:
+    get:
+      summary: Get user profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  email:
+                    type: string
+        "404":
+          description: User not found
+
+  /search:
+    get:
+      summary: Search for songs, artists, albums, or playlists
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [song, artist, album, playlist]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Search results retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                        id:
+                          type: string
+                        title:
+                          type: string
+                        artist:
+                          type: string
+
+  /stream/{song_id}:
+    get:
+      summary: Get streaming URL for a song
+      parameters:
+        - name: song_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirect to streaming URL
+          headers:
+            Location:
+              schema:
+                type: string
+
+  /recommendations/{user_id}:
+    get:
+      summary: Get personalized recommendations
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: List of recommended songs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recommendations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        song_id:
+                          type: string
+                        title:
+                          type: string
+                        artist:
+                          type: string
+
+  /ads/{user_id}:
+    get:
+      summary: Fetch personalized ads
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ad information retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ad_id:
+                    type: string
+                  ad_url:
+                    type: string
+                  duration:
+                    type: integer
+
+  /subscriptions:
+    post:
+      summary: Process premium subscription payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                payment_method:
+                  type: string
+                amount:
+                  type: number
+      responses:
+        "201":
+          description: Subscription successful
+        "400":
+          description: Invalid request
+
+  /lyrics/{song_id}:
+    get:
+      summary: Get lyrics for a song
+      parameters:
+        - name: song_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lyrics retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lyrics:
+                    type: string
+
+  /analytics/interactions:
+    post:
+      summary: Log user interaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                event:
+                  type: string
+                timestamp:
+                  type: string
+                  format: date-time
+      responses:
+        "200":
+          description: Interaction logged
