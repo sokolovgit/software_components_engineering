@@ -1,0 +1,35 @@
+@startuml
+actor User
+participant "API Gateway" as Gateway
+participant "Circuit Breaker" as CB
+participant "Streaming Service" as SS
+participant "Redis" as Redis
+
+User -> Gateway: GET /stream/{track_id}
+Gateway -> CB: getStreamURL(track_id)
+note right of CB: Circuit Breaker logic
+alt circuit closed
+    CB -> SS: GET /stream/{track_id} (with retries)
+    alt success
+        SS --> CB: 200 OK with URL
+        CB --> Gateway: 200 OK with URL
+    else failure
+        CB -> Redis: get cached URL
+        alt cached
+            Redis --> CB: cached URL
+            CB --> Gateway: 200 OK with cached URL
+        else not cached
+            CB --> Gateway: 503 Service Unavailable
+        end
+    end
+else circuit open
+    CB -> Redis: get cached URL
+    alt cached
+        Redis --> CB: cached URL
+        CB --> Gateway: 200 OK with cached URL
+    else not cached
+        CB --> Gateway: 503 Service Unavailable
+    end
+end
+Gateway --> User: response
+@enduml
